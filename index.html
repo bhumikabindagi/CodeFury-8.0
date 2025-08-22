@@ -3,9 +3,112 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>agriconnect</title>
+    <title>FarmFusion</title>
 </head>
 <body>
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">A</div>
+    <nav class="nav">
+      <a href="#/aboutus">About Us</a>
+      <a href="#/marketplace">Marketplace</a>
+      <a href="#/equipment">Equipments</a>
+      <a href="#/analytics">Analytics</a>
+      <a href="#/advisor">Agromitra</a>
+      <a href="#/news">Updates</a>
+    </nav>
+  </header>
+  </main>
+
+  <footer class="footer">
+    <div>
+      © <span id="year"></span> FarmFusion.Bridging soil and Technology\\\\\\\\\\\\\\.
+    </div>
+  </footer>
+
+  <div class="chatbot">
+    <div class="chatbot-panel" id="chatbotPanel">
+      <div class="chatbot-header">Agro mitra</div>
+      <div class="chatbot-body" id="chatBody"></div>
+      <div class="chatbot-input">
+        <input id="chatInput" class="input" placeholder="Ask about crop, price, timing..."/>
+        <button class="btn" id="chatSend">Send</button>
+      </div>
+    </div>
+    <button class="chatbot-toggle" id="chatToggle">AI</button>
+  </div>
+
+  <div class="chatbot">
+    <div class="chatbot-panel" id="chatbotPanel">
+      <div class="chatbot-header">AI Chatbot</div>
+      <div class="chatbot-body" id="chatBody"></div>
+      <div class="chatbot-input">
+        <input id="chatInput" class="input" placeholder="Ask about crop, price, timing..."/>
+        <button class="btn" id="chatSend">Send</button>
+      </div>
+    </div>
+    <button class="chatbot-toggle" id="chatToggle">AI</button>
+  </div>
+
+  <script src="src/app.js" type="module"></script>
+  <script src="main_app.js"></script>
+  <script type="module">
+    import { advise } from './src/utils/advisor-core.js';
+    const panel = document.getElementById('chatbotPanel');
+    const toggle = document.getElementById('chatToggle');
+    const body = document.getElementById('chatBody');
+    const input = document.getElementById('chatInput');
+    const send = document.getElementById('chatSend');
+
+    function pushBubble(text, who='ai'){
+      const div = document.createElement('div');
+      div.className = 'bubble ' + who;
+      div.textContent = text;
+      body.appendChild(div);
+      body.scrollTop = body.scrollHeight;
+    }
+
+    toggle.onclick = () => {
+      panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+      if (panel.style.display=== 'block' && !body.dataset.greeted) {
+        pushBubble('Namaste.here is your agro mitra!!');
+        body.dataset.greeted = '1';
+      }
+    };
+
+    function parseQuery(q){
+      q = q.toLowerCase();
+      const crop = (q.match(/wheat|rice|tomato|maize|soybean|cotton/)||[])[0] || 'Wheat';
+      const area = Number((q.match(/(\d+(?:\.\d+)?)\s*(acre|acres)/)||[])[1]) || 1;
+      const budget = Number((q.match(/₹\s*(\d+)/)||[])[1]) || Number((q.match(/rs\.?\s*(\d+)/)||[])[1]) || 0;
+      const irrigation = q.includes('drip') ? 'drip' : q.includes('flood') ? 'flood' : 'rainfed';
+      return { crop, area, irrigation, budget };
+    }
+
+    async function handleAsk(){
+      const q = input.value.trim(); if(!q) return;
+      pushBubble(q, 'user'); input.value='';
+      try{
+        const data = JSON.parse(localStorage.getItem('agri-connect-store-v1')) || {};
+        const { crop, area, irrigation, budget } = parseQuery(q);
+        const priceSeries = data.history?.prices?.[crop] || [];
+        const rec = advise({ crop, area, irrigation, budget, priceSeries });
+        pushBubble(For ${crop}: ${rec.marketWindow}. Target ~ ₹${rec.targetPrice.toFixed(2)}/kg. Actions: ${rec.actions.join('; ')});
+      }catch(e){
+        pushBubble('Sorry, I had trouble analyzing that. Please rephrase.');
+      }
+    }
+    send.onclick = handleAsk;
+    input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') handleAsk(); });
+  </script>
+
+
+  
+
 </body>
 </html>
